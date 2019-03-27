@@ -1,18 +1,36 @@
 <template>
   <div id="app">
-          <div class="col-12-sm">
-              <input type="text" v-model="searchText" @keyup.enter="sendSearch">
-              <button type="button" class="btn btn-primary" @click="sendSearch()">Search</button>
-              <button type="button" class="btn btn-success" @click="sendSearch(...arguments, true)">Surprise me!</button>
-              {{ totalResults }}
+          <div class="row">
+              <form class="form-inline" style="width: 100%" @submit.prevent="sendSearch()">
+                  <div class="form-group bmd-form-group" style="width: 100%">
+                      <label for="search" class="bmd-label-floating">Search PDFs at PeerJ</label>
+                      <input id="search" type="text" class="form-control col-8" name="search" aria-label="Search..." v-model="searchText" @keyup.enter="sendSearch">
+                      <div class="input-group-append col-4">
+                          <button class="btn btn-outline-info active" type="button" @click="sendSearch()">Search</button>
+                          <button class="btn btn-sm btn-dark" type="button" @click="sendSearch(...arguments, true)">Feeling stochastic!</button>
+                      </div>
+                  </div>
+              </form>
           </div>
-          <div class="col-12-sm">
-              <span v-if="searchError" class="alert alert-danger">{{ searchError }}</span>
+          <div class="row">
+              <div class="col-12-sm" style="font-weight: bold; font-size: 12px; margin-bottom: 15px;">{{ totalResults }}</div>
           </div>
-          <div class="col-12-sm">
-              <ol :start="currentStart">
-                  <li v-for="result in searchResults">{{ result._source.title }}</li>
-              </ol>
+
+          <div class="row">
+              <div class="col-8-sm">
+                  <span v-if="searchError" class="alert alert-danger">{{ searchError }}</span>
+              </div>
+          </div>
+            <div class="row">
+              <div class="col-8-sm">
+                  <ul class="list-unstyled" :start="currentStart">
+                      <li v-for="result in searchResults" style="line-height: 1.2; margin-bottom: 15px"><a
+                              :href="'https://peerj.com/articles/' + result._source.key + '/'">{{ result._source.title }}</a>
+                          <span style="color: deeppink; margin-left: 10px; font-size: 12px; font-weight: bold">[<a
+                                  :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" style="color: deeppink; font-weight: bold">PDF</a>]</span>
+                      </li>
+                  </ul>
+              </div>
           </div>
           <div class="col-12-sm">
               <nav v-if="searchResults.length">
@@ -38,7 +56,7 @@
 </template>
 
 <script>
-import 'bootstrap/dist/css/bootstrap.min.css'
+// import 'bootstrap/dist/css/bootstrap.min.css'
 // JQuery is required by bootstrap, but let's try out a different ajax lib
 import Axios from 'axios'
 const itemsPerPage = 25
@@ -51,9 +69,9 @@ export default {
              pageCurrent: 0,
              page: 0,
              searchError: '',
-             searchText: 'exemplo',
+             searchText: '',
              searchResults: [],
-             totalResults: 0,
+             totalResults: '',
          }
      },
      methods: {
@@ -69,7 +87,7 @@ export default {
              this.sendQuery()
          },
          sendQuery (page) {
-             let query = 'http://localhost:1180/api/search/?' + this.currentQuery
+             let query = 'https://peerj.com/api/search/?' + this.currentQuery
              if (page) {
                  this.page = page
              }
@@ -78,7 +96,7 @@ export default {
                   .then((result) => {
                       if (result.data.hits != 'undefined') {
                           if (result.data.hits.total) {
-                              this.totalResults = result.data.hits.total
+                              this.totalResults = result.data.hits.total + ' result(s)'
                               this.searchResults = result.data.hits.hits
                           } else {
                               this.searchError = 'No results found'
@@ -103,7 +121,6 @@ export default {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   margin-top: 60px;
     font-size: x-large;
