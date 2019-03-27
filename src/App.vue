@@ -24,7 +24,7 @@ export default {
      },
      methods: {
          sendSearch (e, random) {
-             let query = random ? 'stochastic' : 'q=' + this.searchText
+             let query = random ? 'stochastic=1' : 'q=' + this.searchText
              if (this.searchText.length > 3) {
                  Axios.get('http://localhost:1180/api/search/?' + query, {crossDomain: true})
                       .then((result) => {
