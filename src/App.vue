@@ -13,23 +13,33 @@
               </form>
           </div>
           <div class="row">
-              <div class="col-12-sm" style="font-weight: bold; font-size: 12px; margin-bottom: 15px;">{{ totalResults }}</div>
+              <div class="col-12-sm result-count">{{ totalResults }}</div>
           </div>
 
-          <div class="row">
+          <div class="row" v-if="searchError">
               <div class="col-8-sm">
-                  <span v-if="searchError" class="alert alert-danger">{{ searchError }}</span>
+                  <span class="alert alert-danger">{{ searchError }}</span>
               </div>
           </div>
             <div class="row">
-              <div class="col-8-sm">
-                  <ul class="list-unstyled" :start="currentStart">
-                      <li v-for="result in searchResults" style="line-height: 1.2; margin-bottom: 15px"><a
-                              :href="'https://peerj.com/articles/' + result._source.key + '/'">{{ result._source.title }}</a>
-                          <span style="color: deeppink; margin-left: 10px; font-size: 12px; font-weight: bold">[<a
-                                  :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" style="color: deeppink; font-weight: bold">PDF</a>]</span>
-                      </li>
-                  </ul>
+              <div class="col-8-sm result-list">
+                  <div :start="currentStart">
+                      <div v-for="result in searchResults" class="result-item">
+                          <div class="result-left-item">
+                              <a :href="'https://peerj.com/articles/' + result._source.key + '/'" class="result-title" v-html="result.highlight.title[0]"></a>
+
+                              <div>
+                                  <span class="result-published">{{ result._source.published | formatDate }} - </span>
+                                  <span class="result-fulltext" v-html="result.highlight.fulltext[0]"></span>
+                              </div>
+                          </div>
+                          <div class="result-right-item">
+                              <a
+                                  :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" class="result-pdf-link">[PDF]</a>
+                              <span class="result-citations" v-if="result._source.maxcitations > 0">{{ result._source.maxcitations }} citation<span v-if="result._source.maxcitations > 1">s</span></span>
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div>
           <div class="col-12-sm">
@@ -57,9 +67,11 @@
 
 <script>
 // import 'bootstrap/dist/css/bootstrap.min.css'
+import moment from 'moment'
+
 // JQuery is required by bootstrap, but let's try out a different ajax lib
 import Axios from 'axios'
-const itemsPerPage = 25
+const itemsPerPage = 25;
 
 export default {
   name: 'app',
@@ -74,6 +86,12 @@ export default {
              totalResults: '',
          }
      },
+    filters: {
+        formatDate: function (value) {
+            if (!value) return '';
+            return moment(String(value)).format('D MMM YYYY');
+        }
+    },
      methods: {
          sendSearch (e, random) {
              if (!random && this.searchText.length < 3) {
@@ -87,7 +105,8 @@ export default {
              this.sendQuery()
          },
          sendQuery (page) {
-             let query = 'https://peerj.com/api/search/?' + this.currentQuery
+             this.searchError = ''
+             let query = 'http://localhost:1180/api/search/?' + this.currentQuery
              if (page) {
                  this.page = page
              }
@@ -117,12 +136,80 @@ export default {
 </script>
 
 <style lang="scss">
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  margin-top: 60px;
-    font-size: x-large;
-}
+    #app {
+        font-family: 'Avenir', Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #2c3e50;
+        margin-top: 60px;
+        font-size: x-large;
+    }
+
+    .search-highlight {
+        font-weight: 600;
+        font-size: 105%;
+        letter-spacing: -0.01em;
+    }
+
+    .result-list {
+        max-width: 900px;
+    }
+
+    .result-item {
+        margin-bottom: 12px; display: inline-block;
+    }
+
+    .result-left-item {
+        display: inline-block;
+        float: left;
+        max-width: 83%;
+        line-height: 18px;
+    }
+
+    .result-right-item {
+        width: 15%;
+        float:right;
+        display: inline-block;
+        margin-left: 10px;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 20px;
+    }
+
+    .result-title {
+        color: #0c37eb !important;
+        font-weight: 500;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .result-published {
+        font-size: 13px;
+        line-height: 1.2;
+        color: #717171;
+        font-weight: 500;
+    }
+
+    .result-fulltext {
+        font-size: 14px;
+        line-height: 1.2;
+        font-weight: 500;
+        color: #515151;
+    }
+
+    .result-pdf-link {
+        color: deeppink; font-weight: bold
+    }
+
+    .result-citations {
+        margin-left: 10px;
+        font-size: 14px;
+        color: green;
+        font-weight: 400
+    }
+    .result-count {
+        font-weight: bold;
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
 </style>
