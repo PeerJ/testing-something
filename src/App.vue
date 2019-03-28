@@ -3,8 +3,8 @@
           <div class="row">
               <form class="form-inline" style="width: 100%" @submit.prevent="sendSearch()">
                   <div class="form-group bmd-form-group" style="width: 100%">
-                      <label for="search" class="bmd-label-floating">Search PDFs at PeerJ</label>
-                      <input id="search" type="text" class="form-control col-8" name="search" aria-label="Search..." v-model="searchText" @keyup.enter="sendSearch">
+                      <label for="search" class="bmd-label-floating">Search PDFs at PeerJ. We've hacked ourselves, so you don't have to ;)</label>
+                      <input ref="search" id="search" type="text" class="form-control col-8" name="search" aria-label="Search..." v-model="searchText" @keyup.enter="sendSearch">
                       <div class="input-group-append col-4">
                           <button class="btn btn-outline-info active" type="button" @click="sendSearch()">Search</button>
                           <button class="btn btn-sm btn-dark" type="button" @click="sendSearch(...arguments, true)">Feeling stochastic!</button>
@@ -96,8 +96,14 @@ export default {
          sendSearch (e, random) {
              if (!random && this.searchText.length < 3) {
                  this.searchError = 'Please type more than two letters'
+                 this.$refs.search.focus()
                  return
              }
+
+             if (random) {
+                 this.searchText = ''
+             }
+
              this.page = 0
 
              // needs escaping
