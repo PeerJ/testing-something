@@ -30,7 +30,8 @@
 
                               <div>
                                   <span class="result-published">{{ result._source.published | formatDate }} - </span>
-                                  <span class="result-fulltext" v-html="result.highlight.fulltext[0]"></span>
+                                  <span v-show="isHidden"  class="result-fulltext">{{ result._source.abstract }}</span>
+                                  <span v-show='!isHidden' class="result-fulltext" v-html="result.highlight.fulltext[0]"></span>
                               </div>
                           </div>
                           <div class="result-right-item">
@@ -42,7 +43,7 @@
                   </div>
               </div>
           </div>
-          <div class="col-12-sm">
+          <div class="col-12-sm" v-show='!isHidden'>
               <nav v-if="searchResults.length">
                   <ul class="pagination">
                       <li class="page-item">
@@ -84,6 +85,7 @@ export default {
              searchText: '',
              searchResults: [],
              totalResults: '',
+             isHidden: false
          }
      },
     filters: {
@@ -102,6 +104,9 @@ export default {
 
              if (random) {
                  this.searchText = ''
+                 this.isHidden = true
+             } else {
+                 this.isHidden = false
              }
 
              this.page = 0
@@ -112,7 +117,7 @@ export default {
          },
          sendQuery (page) {
              this.searchError = ''
-             let query = 'http://localhost:1180/api/search/?' + this.currentQuery
+             let query = 'https://peerj.com/api/search/?' + this.currentQuery
              if (page) {
                  this.page = page
              }
