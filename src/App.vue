@@ -1,69 +1,132 @@
 <template>
-  <div id="app">
-          <div class="row">
-              <form class="form-inline" style="width: 100%" @submit.prevent="sendSearch()">
-                  <div class="form-group bmd-form-group" style="width: 100%">
-                      <label for="search" class="bmd-label-floating">Search PDFs at PeerJ. We've hacked ourselves, so you don't have to ;)</label>
-                      <input ref="search" id="search" type="text" class="form-control col-8" name="search" aria-label="Search..." v-model="searchText" @keyup.enter="sendSearch">
-                      <div class="input-group-append col-4">
-                          <button class="btn btn-outline-info active" type="button" @click="sendSearch()">Search</button>
-                          <button class="btn btn-sm btn-dark" type="button" @click="sendSearch(...arguments, true)">Feeling stochastic!</button>
-                      </div>
-                  </div>
-              </form>
-          </div>
-          <div class="row">
-              <div class="col-12-sm result-count">{{ totalResults }}</div>
-          </div>
+    <div id="app">
+        <v-app id="inspire">
+            <v-navigation-drawer
+                    fixed
+                    clipped
+                    class="grey lighten-4"
+                    app temporary
+                    v-model="drawer"
+            >
+                <v-list
+                        dense
+                        class="grey lighten-4"
+                >
+                    <template v-for="(item, i) in items">
+                        <v-layout
+                                row
+                                v-if="item.heading"
+                                align-center
+                                :key="i"
+                        >
+                            <v-flex xs6>
+                                <v-subheader v-if="item.heading">
+                                    {{ item.heading }}
+                                </v-subheader>
+                            </v-flex>
+                        </v-layout>
+                        <v-divider
+                                dark
+                                v-else-if="item.divider"
+                                class="my-3"
+                                :key="i"
+                        ></v-divider>
+                        <v-list-tile
+                                :key="i"
+                                v-else
+                                :href="item.href"
+                        >
+                            <v-list-tile-action>
+                                <v-icon>{{ item.icon }}</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title class="grey--text">
+                                    {{ item.text }}
+                                </v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                    </template>
+                </v-list>
+            </v-navigation-drawer>
+            <v-toolbar color="light-blue darken-1" app absolute clipped-left>
+                <v-toolbar-side-icon @click.native="drawer = !drawer"></v-toolbar-side-icon>
+                <span class="title ml-3 mr-5">PeerJ&nbsp;<span class="text">- SciHub</span></span>
+                <v-flex xs12 md6>
+                    <v-form @submit.prevent="sendSearch">
+                        <v-text-field
+                                v-model="searchText"
+                                @keyup="sendSearch"
+                                :error-messages="searchError"
+                                ref="search"
+                                solo-inverted
+                                flat color="light-blue lighten-4"
+                                label="Search for peer-reviewed PDFs at PeerJ."
+                                prepend-icon="search"
+                                clearable
+                        ></v-text-field>
+                    </v-form>
+                </v-flex>
+                <v-spacer></v-spacer>
+                <v-btn class="hidden-sm-and-down" color="grey lighten-2" flat @click="sendSearch(...arguments, true)">Feeling Stochastic?!</v-btn>
+            </v-toolbar>
 
-          <div class="row" v-if="searchError">
-              <div class="col-8-sm">
-                  <span class="alert alert-danger">{{ searchError }}</span>
-              </div>
-          </div>
-            <div class="row">
-              <div class="col-8-sm result-list">
-                  <div :start="currentStart">
-                      <div v-for="result in searchResults" class="result-item">
-                          <div class="result-left-item">
-                              <a :href="'https://peerj.com/articles/' + result._source.key + '/'" class="result-title" v-html="result.highlight.title[0]"></a>
+            <v-content>
+                <v-container fluid fill-height class="lighten-4">
+                    <v-layout row>
+                        <v-flex md9 offset-md1>
+                            <div class="row">
+                                <div v-if="searchText" class="result-count">{{ totalResults }} result<span v-if="totalResults != 1">s</span></div>
+                            </div>
 
-                              <div>
-                                  <span class="result-published">{{ result._source.published | formatDate }} - </span>
-                                  <span v-show="isHidden"  class="result-fulltext">{{ result._source.abstract }}</span>
-                                  <span v-show='!isHidden' class="result-fulltext" v-html="result.highlight.fulltext[0]"></span>
-                              </div>
-                          </div>
-                          <div class="result-right-item">
-                              <a
-                                  :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" class="result-pdf-link">[PDF]</a>
-                              <span class="result-citations" v-if="result._source.maxcitations > 0">{{ result._source.maxcitations }} citation<span v-if="result._source.maxcitations > 1">s</span></span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          <div class="col-12-sm" v-show='!isHidden'>
-              <nav v-if="searchResults.length">
-                  <ul class="pagination">
-                      <li class="page-item">
-                          <a class="page-link" href="#" tabindex="-1" @click="sendQuery(page - 1)">Previous</a>
-                      </li>
-                      <li class="page-item">
-                          <a class="page-link" href="#" @click="sendQuery(0)">1</a></li>
-                      <li class="page-item active">
-                          <a class="page-link" href="#" @click="sendQuery(1)">2 <span class="sr-only">(current)</span></a>
-                      </li>
-                      <li class="page-item">
-                          <a class="page-link" href="#" @click="sendQuery(2)">3</a>
-                      </li>
-                      <li class="page-item">
-                          <a class="page-link" href="#" @click="sendQuery(page + 1)">Next</a>
-                      </li>
-                  </ul>
-              </nav>
-          </div>
-  </div>
+                            <!--<div class="row" v-if="searchError">-->
+                            <!--<div class="col-8-sm">-->
+                            <!--<span class="alert alert-danger">{{ searchError }}</span>-->
+                            <!--</div>-->
+                            <!--</div>-->
+                            <div class="result-list">
+                                <div>
+                                    <div v-for="result in searchResults" class="result-item">
+                                        <div class="result-left-item">
+                                            <a :href="'https://peerj.com/articles/' + result._source.key + '/'" class="result-title" v-html="result.highlight.title[0]"></a>
+
+                                            <div>
+                                                <span class="result-published">{{ result._source.published | formatDate }} - </span>
+                                                <span v-show="isHidden"  class="result-fulltext">{{ result._source.abstract }}</span>
+                                                <span v-show='!isHidden' class="result-fulltext" v-html="result.highlight.fulltext[0]"></span>
+                                            </div>
+                                        </div>
+                                        <div class="result-right-item">
+                                            <a
+                                                :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" class="result-pdf-link">[PDF]</a>
+                                            <span class="result-citations" v-if="result._source.maxcitations > 0">{{ result._source.maxcitations }} citation<span v-if="result._source.maxcitations > 1">s</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="pagination.pages > 1 && !isHidden">
+                                <v-pagination
+                                        v-model="pagination.resultPage"
+                                        @input="sendQuery"
+                                        :length="pagination.pages"
+                                        :total-visible="8"
+                                ></v-pagination>
+                            </div>
+                        </v-flex>
+                    </v-layout>
+                </v-container>
+
+                <v-container>
+                    <v-layout align-end justify-center row>
+                            <div class="hacked-line" style="color:grey">
+                                <span style="margin-right: 20px">We've hacked PeerJ, so you don't have to ;)</span>
+                                <a href="#">Read the announcement</a></div>
+                    </v-layout>
+                </v-container>
+
+            </v-content>
+        </v-app>
+    </div>
 </template>
 
 <script>
@@ -76,16 +139,29 @@ const itemsPerPage = 25;
 
 export default {
   name: 'app',
-     data () {
+    data () {
          return {
              currentQuery: '',
+             totalResults: 0,
              pageCurrent: 0,
              page: 0,
+             pagination: {
+                 resultPage: 1,
+                 pages: 0
+             },
              searchError: '',
              searchText: '',
              searchResults: [],
-             totalResults: '',
-             isHidden: false
+             isHidden: false,
+             drawer: null,
+             items: [
+                 { heading: 'Journals' },
+                 { icon: 'home', href: 'https://peerj.com/', text: 'PeerJ – Life, Environ., Med' },
+                 { icon: 'home', href: 'https://peerj.com/computer-science', text: 'PeerJ Computer Science' },
+                 { icon: 'home', href: 'https://peerj.com/chemsitry/', text: 'PeerJ Chemistry' },
+                 { icon: 'home',  href: 'https://peerj.com/preprints/', text: 'PeerJ Preprints' },
+                 { divider: true }
+             ]
          }
      },
     filters: {
@@ -95,46 +171,66 @@ export default {
         }
     },
      methods: {
-         sendSearch (e, random) {
-             if (!random && this.searchText.length < 3) {
-                 this.searchError = 'Please type more than two letters'
-                 this.$refs.search.focus()
-                 return
-             }
+      scrollToTop(scrollDuration) {
+          var scrollStep = -window.scrollY / (scrollDuration / 15),
+              scrollInterval = setInterval(function(){
+                  if ( window.scrollY != 0 ) {
+                      window.scrollBy( 0, scrollStep );
+                  }
+                  else clearInterval(scrollInterval);
+              },15);
+      },
+      sendSearch (e, random) {
+        if (!random && this.searchText.length < 3) {
+         this.searchError = 'Please type more than two letters'
+         this.$refs.search.focus()
+         return
+        }
 
-             if (random) {
-                 this.searchText = ''
-                 this.isHidden = true
-             } else {
-                 this.isHidden = false
-             }
+        if (random) {
+         this.searchText = ''
+         this.isHidden = true
+        } else {
+         this.isHidden = false
+        }
 
-             this.page = 0
+        this.page = 0
 
-             this.currentQuery = random ? 'stochastic=1' : 'q=' + encodeURIComponent(this.searchText)
-             this.sendQuery()
-         },
-         sendQuery (page) {
-             this.searchError = ''
-             let query = 'https://peerj.com/api/search/?' + this.currentQuery
-             if (page) {
-                 this.page = page
-             }
-             query += '&from=' + this.page
-             Axios.get(query, {crossDomain: true})
-                  .then((result) => {
-                      if (result.data.hits != 'undefined') {
-                          if (result.data.hits.total) {
-                              this.totalResults = result.data.hits.total + ' result(s)'
-                              this.searchResults = result.data.hits.hits
-                          } else {
-                              this.searchError = 'No results found'
-                          }
+        this.currentQuery = random ? 'stochastic=1' : 'q=' + encodeURIComponent(this.searchText)
+
+        if (this.timer) {
+          clearTimeout(this.timer);
+          this.timer = null;
+        }
+        this.timer = setTimeout(() => {
+            this.sendQuery()
+        }, 100);
+     },
+     sendQuery (resultPage) {
+         this.searchError = ''
+         let query = 'https://peerj.com/api/search/?' + this.currentQuery
+         if (resultPage) {
+             this.page = this.pagination.resultPage - 1
+         }
+         query += '&from=' + (this.page * itemsPerPage)
+         Axios.get(query, {crossDomain: true})
+              .then((result) => {
+                  if (result.data.hits != 'undefined') {
+                      if (result.data.hits.total) {
+                          this.totalResults = result.data.hits.total
+                          this.searchResults = result.data.hits.hits
+                          this.pagination.resultPage = this.page + 1
+                          this.pagination.pages = Math.round(result.data.hits.total / itemsPerPage)
+                      } else {
+                          this.searchError = 'No results found'
                       }
-                  })
-                  .catch((error) => {
-                      console.log(error)
-                  })
+                  }
+
+                  this.scrollToTop(200)
+              })
+              .catch((error) => {
+                  console.log(error)
+              })
          }
      },
      computed: {
@@ -146,12 +242,23 @@ export default {
 </script>
 
 <style lang="scss">
+    #keep main .container {
+        height: 660px;
+    }
+
+    .navigation-drawer__border {
+        display: none;
+    }
+
+    .text {
+        font-weight: 400;
+    }
+
     #app {
-        font-family: 'Avenir', Helvetica, Arial, sans-serif;
+        font-family: 'Avenir', Helvetica, Arial, sans-serif !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         color: #2c3e50;
-        margin-top: 60px;
         font-size: x-large;
     }
 
@@ -163,6 +270,11 @@ export default {
 
     .result-list {
         max-width: 900px;
+        font-family: 'Avenir', Helvetica, Arial, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #2c3e50;
+        font-size: x-large;
     }
 
     .result-item {
@@ -187,10 +299,16 @@ export default {
     }
 
     .result-title {
-        color: #0c37eb !important;
+        color: #2f31e1 !important;
         font-weight: 500;
-        font-size: 18px;
+        font-size: 20px;
+        line-height: 1.2;
         margin-bottom: 8px;
+        text-decoration: none;
+    }
+
+    .result-title:hover {
+        text-decoration: underline;
     }
 
     .result-published {
@@ -208,7 +326,9 @@ export default {
     }
 
     .result-pdf-link {
-        color: deeppink; font-weight: bold
+        color: deeppink;
+        font-weight: bold;
+        text-decoration: none;
     }
 
     .result-citations {
