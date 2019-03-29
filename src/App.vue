@@ -111,8 +111,7 @@ export default {
 
              this.page = 0
 
-             // needs escaping
-             this.currentQuery = random ? 'stochastic=1' : 'q=' + this.searchText
+             this.currentQuery = random ? 'stochastic=1' : 'q=' + encodeURIComponent(this.searchText)
              this.sendQuery()
          },
          sendQuery (page) {
