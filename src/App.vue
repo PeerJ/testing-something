@@ -2,7 +2,7 @@
     <div id="app">
         <v-app id="inspire">
             <v-navigation-drawer
-                    fixed
+                    fixed right
                     clipped
                     class="grey lighten-4"
                     app temporary
@@ -48,10 +48,10 @@
                     </template>
                 </v-list>
             </v-navigation-drawer>
-            <v-toolbar color="light-blue darken-1" app absolute clipped-left>
-                <v-toolbar-side-icon @click.native="drawer = !drawer"></v-toolbar-side-icon>
-                <span class="title ml-3 mr-5">PeerJ&nbsp;<span class="text">- SciHub</span></span>
-                <v-flex xs12 md6>
+            <v-toolbar color="primary lighten-1" app absolute clipped-left>
+                <div class="title peerj-title" style="letter-spacing: -0.02em !important;">PeerJ<span class="text">-SciHub</span></div>
+
+                <v-flex xs10 sm9 md7 ml-4 mt-2 peerj-search-bar>
                     <v-form @submit.prevent="sendSearch">
                         <v-text-field
                                 v-model="searchText"
@@ -61,21 +61,23 @@
                                 solo-inverted
                                 flat color="light-blue lighten-4"
                                 label="Search for peer-reviewed PDFs at PeerJ."
-                                prepend-icon="search"
+                                append-icon="search"
                                 clearable
                         ></v-text-field>
                     </v-form>
                 </v-flex>
-                <v-spacer></v-spacer>
-                <v-btn class="hidden-sm-and-down" color="grey lighten-2" flat @click="sendSearch(...arguments, true)">Feeling Stochastic?!</v-btn>
+
+            <v-spacer class="hidden-sm-and-down"></v-spacer>
+            <v-btn class="hidden-sm-and-down primary lighten-2" color="grey lighten-2" flat @click="sendSearch(...arguments, true)">Feeling Stochastic?!</v-btn>
+            <v-toolbar-side-icon @click.native="drawer = !drawer"></v-toolbar-side-icon>
             </v-toolbar>
 
             <v-content>
                 <v-container fluid fill-height class="lighten-4">
                     <v-layout row>
-                        <v-flex md9 offset-md1>
+                        <v-flex md9 offset-md1 class="results-container">
                             <div class="row">
-                                <div v-if="searchText" class="result-count">{{ totalResults }} result<span v-if="totalResults != 1">s</span></div>
+                                <div v-if="searchText" class="result-count">{{ totalResults.toLocaleString() }} result<span v-if="totalResults != 1">s</span></div>
                             </div>
 
                             <!--<div class="row" v-if="searchError">-->
@@ -88,7 +90,6 @@
                                     <div v-for="result in searchResults" class="result-item">
                                         <div class="result-left-item">
                                             <a :href="'https://peerj.com/articles/' + result._source.key + '/'" class="result-title" v-html="result.highlight.title[0]"></a>
-
                                             <div>
                                                 <span class="result-published">{{ result._source.published | formatDate }} - </span>
                                                 <span v-show="isHidden"  class="result-fulltext">{{ result._source.abstract }}</span>
@@ -96,8 +97,15 @@
                                             </div>
                                         </div>
                                         <div class="result-right-item">
-                                            <a
-                                                :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" class="result-pdf-link">[PDF]</a>
+                                            <v-tooltip slot="append" left color="pink lighten-1">
+                                                <a slot="activator"
+                                                    :href="'https://peerj.com/articles/' + result._source.key + '.pdf'" class="result-pdf-link">
+                                                    <v-btn fab dark small color="pink">
+                                                        <v-icon dark>save_alt</v-icon>
+                                                    </v-btn>
+                                                </a>
+                                                <span>Download PDF</span>
+                                            </v-tooltip>
                                             <span class="result-citations" v-if="result._source.maxcitations > 0">{{ result._source.maxcitations }} citation<span v-if="result._source.maxcitations > 1">s</span></span>
                                         </div>
                                     </div>
@@ -116,14 +124,39 @@
                     </v-layout>
                 </v-container>
 
-                <v-container>
-                    <v-layout align-end justify-center row>
-                            <div class="hacked-line" style="color:grey">
-                                <span style="margin-right: 20px">We've hacked PeerJ, so you don't have to ;)</span>
-                                <a href="#">Read the announcement</a></div>
+                <v-footer
+                        height="auto"
+                            color="inverted lighten-1"
+                        style="font-size: 16px"
+                >
+                    <v-layout
+                            justify-center
+                            row
+                            wrap
+                            py-3
+                    >
+                        <v-flex
+                                inverted
+                                lighten-1
+                                py-3
+                                dark--text
+                                text-xs-center
+                                xs5
+                        >
+                                We've hacked PeerJ, so you don't have to ;).
+                                <div><a href="https://peerj.com/blog/?p=115284881385&preview=true">Read the April 1st announcement</a></div>
+                        </v-flex>
+                            <v-flex inverted
+                                    lighten-1
+                                    py-3
+                                    px-3
+                                    text-xs-center
+                                    dark--text
+                                    xs7>
+                                "By 'Sci-hubbing' itself, PeerJ has taken Open Access to an 11" – Anon
+                            </v-flex>
                     </v-layout>
-                </v-container>
-
+                </v-footer>
             </v-content>
         </v-app>
     </div>
@@ -135,7 +168,7 @@ import moment from 'moment'
 
 // JQuery is required by bootstrap, but let's try out a different ajax lib
 import Axios from 'axios'
-const itemsPerPage = 25;
+const itemsPerPage = 20;
 
 export default {
   name: 'app',
@@ -158,7 +191,7 @@ export default {
                  { heading: 'Journals' },
                  { icon: 'home', href: 'https://peerj.com/', text: 'PeerJ – Life, Environ., Med' },
                  { icon: 'home', href: 'https://peerj.com/computer-science', text: 'PeerJ Computer Science' },
-                 { icon: 'home', href: 'https://peerj.com/chemsitry/', text: 'PeerJ Chemistry' },
+                 { icon: 'home', href: 'https://peerj.com/chemistry/', text: 'PeerJ Chemistry' },
                  { icon: 'home',  href: 'https://peerj.com/preprints/', text: 'PeerJ Preprints' },
                  { divider: true }
              ]
@@ -220,7 +253,7 @@ export default {
                           this.totalResults = result.data.hits.total
                           this.searchResults = result.data.hits.hits
                           this.pagination.resultPage = this.page + 1
-                          this.pagination.pages = Math.round(result.data.hits.total / itemsPerPage)
+                          this.pagination.pages = Math.ceil(result.data.hits.total / itemsPerPage)
                       } else {
                           this.searchError = 'No results found'
                       }
@@ -262,6 +295,21 @@ export default {
         font-size: x-large;
     }
 
+    .peerj-search-bar {
+        margin-right: 15px;
+    }
+
+    .peerj-title {
+        width: 127px !important;
+        color: #204372;
+    }
+
+    @media (min-width: 860px) {
+        .results-container {
+            margin-left: 152px !important;
+        }
+    }
+
     .search-highlight {
         font-weight: 600;
         font-size: 105%;
@@ -284,12 +332,12 @@ export default {
     .result-left-item {
         display: inline-block;
         float: left;
-        max-width: 83%;
+        max-width: 78%;
         line-height: 18px;
     }
 
     .result-right-item {
-        width: 15%;
+        width: 18%;
         float:right;
         display: inline-block;
         margin-left: 10px;
@@ -299,7 +347,7 @@ export default {
     }
 
     .result-title {
-        color: #2f31e1 !important;
+        color: #0c37eb !important;
         font-weight: 500;
         font-size: 20px;
         line-height: 1.2;
@@ -325,9 +373,15 @@ export default {
         color: #515151;
     }
 
-    .result-pdf-link {
+    .result-pdf-link_old {
         color: deeppink;
         font-weight: bold;
+        text-decoration: underline;
+        padding: 3px 2px;
+        border-radius: 2px;
+    }
+
+    .result-pdf-link {
         text-decoration: none;
     }
 
